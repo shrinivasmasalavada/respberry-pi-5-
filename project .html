@@ -1,0 +1,1624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LoRa Link — Raspberry Pi 5 + SX126X HAT Guide</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #1e2530;
+    --border: #30363d;
+    --border2: #484f58;
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #6e7681;
+    --green: #3fb950;
+    --green2: #238636;
+    --cyan: #39d353;
+    --teal: #58a6ff;
+    --amber: #d29922;
+    --amber2: #f0b429;
+    --red: #f85149;
+    --purple: #bc8cff;
+    --font-mono: 'Courier New', monospace;
+    --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --radius: 8px;
+    --radius-lg: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 15px;
+    line-height: 1.7;
+  }
+
+  /* ===== HERO ===== */
+  .hero {
+    background: var(--bg);
+    border-bottom: 1px solid var(--border);
+    padding: 64px 24px 48px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .hero::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(63,185,80,0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .hero-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(63,185,80,0.1);
+    border: 1px solid rgba(63,185,80,0.3);
+    color: var(--green);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 5px 12px;
+    border-radius: 20px;
+    margin-bottom: 24px;
+  }
+  .hero-badge::before { content: '◉'; font-size: 8px; }
+  .hero h1 {
+    font-size: clamp(28px, 5vw, 52px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    margin-bottom: 16px;
+    background: linear-gradient(135deg, #e6edf3 0%, #8b949e 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero h1 em {
+    font-style: normal;
+    background: linear-gradient(135deg, #3fb950, #58a6ff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .hero-sub {
+    font-size: 17px;
+    color: var(--text2);
+    max-width: 560px;
+    margin: 0 auto 32px;
+  }
+  .hero-chips {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 40px;
+  }
+  .chip {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 13px;
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-family: var(--font-mono);
+  }
+  .chip.teal { border-color: rgba(88,166,255,0.4); color: var(--teal); background: rgba(88,166,255,0.08); }
+  .chip.green { border-color: rgba(63,185,80,0.4); color: var(--green); background: rgba(63,185,80,0.08); }
+  .hero-toc {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .toc-btn {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-size: 13px;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .toc-btn:hover { background: var(--bg3); border-color: var(--border2); color: var(--text); }
+  .toc-btn .num {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    color: var(--green);
+    font-weight: 600;
+    background: rgba(63,185,80,0.1);
+    padding: 1px 6px;
+    border-radius: 10px;
+  }
+
+  /* ===== LAYOUT ===== */
+  .container { max-width: 900px; margin: 0 auto; padding: 0 24px; }
+
+  /* ===== SECTIONS ===== */
+  .section {
+    padding: 60px 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .section-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .section-num {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--green);
+    background: rgba(63,185,80,0.1);
+    border: 1px solid rgba(63,185,80,0.25);
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .section-tag {
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--text3);
+  }
+  .section h2 {
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    margin-bottom: 12px;
+  }
+  .section-intro {
+    color: var(--text2);
+    font-size: 15px;
+    margin-bottom: 32px;
+    max-width: 680px;
+  }
+
+  /* ===== CARDS ===== */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 20px 24px;
+    margin-bottom: 16px;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+  .card-icon {
+    width: 32px; height: 32px;
+    background: rgba(63,185,80,0.12);
+    border: 1px solid rgba(63,185,80,0.25);
+    border-radius: var(--radius);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 15px;
+    flex-shrink: 0;
+  }
+  .card h3 {
+    font-size: 15px;
+    font-weight: 600;
+  }
+  .card p { color: var(--text2); font-size: 14px; }
+
+  /* ===== DIAGRAM AREA ===== */
+  .diagram-wrapper {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 32px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    justify-content: center;
+  }
+  .diagram-wrapper svg { max-width: 100%; display: block; }
+
+  /* ===== GPIO TABLE ===== */
+  .gpio-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+  @media(max-width: 600px) { .gpio-grid { grid-template-columns: 1fr; } }
+
+  .gpio-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .gpio-card-head {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .gpio-card-head.pi-a { color: var(--teal); }
+  .gpio-card-head.pi-b { color: var(--green); }
+  .gpio-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  .gpio-table th {
+    text-align: left;
+    padding: 8px 16px;
+    color: var(--text3);
+    font-weight: 500;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .gpio-table td {
+    padding: 9px 16px;
+    border-bottom: 1px solid var(--border);
+    color: var(--text2);
+  }
+  .gpio-table tr:last-child td { border-bottom: none; }
+  .pin-badge {
+    display: inline-block;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 700;
+    padding: 2px 7px;
+    border-radius: 5px;
+  }
+  .pin-badge.green { background: rgba(63,185,80,0.15); color: var(--green); }
+  .pin-badge.amber { background: rgba(210,153,34,0.15); color: var(--amber2); }
+  .pin-badge.teal  { background: rgba(88,166,255,0.15); color: var(--teal); }
+  .pin-badge.red   { background: rgba(248,81,73,0.15); color: var(--red); }
+  .pin-badge.purple{ background: rgba(188,140,255,0.15); color: var(--purple); }
+
+  /* ===== STEPS ===== */
+  .steps { display: flex; flex-direction: column; gap: 16px; }
+  .step {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .step-num {
+    flex-shrink: 0;
+    width: 28px; height: 28px;
+    background: rgba(63,185,80,0.12);
+    border: 1px solid rgba(63,185,80,0.3);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: var(--font-mono);
+    color: var(--green);
+    margin-top: 2px;
+  }
+  .step-body { flex: 1; }
+  .step-body strong { display: block; font-size: 15px; margin-bottom: 4px; }
+  .step-body p { color: var(--text2); font-size: 14px; }
+
+  /* ===== CODE BLOCKS ===== */
+  .code-block {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .code-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 16px;
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .code-filename {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .code-lang {
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--amber2);
+    background: rgba(240,180,41,0.1);
+    padding: 2px 7px;
+    border-radius: 5px;
+  }
+  .copy-btn {
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--text3);
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-family: var(--font-sans);
+  }
+  .copy-btn:hover { border-color: var(--border2); color: var(--text2); background: var(--bg3); }
+  .copy-btn.copied { color: var(--green); border-color: rgba(63,185,80,0.4); }
+  pre {
+    padding: 20px;
+    overflow-x: auto;
+    line-height: 1.6;
+    font-family: var(--font-mono);
+    font-size: 13px;
+  }
+  .ln { color: var(--text3); user-select: none; display: inline-block; min-width: 28px; }
+
+  /* Syntax highlight helpers */
+  .kw { color: #ff7b72; }
+  .fn { color: #d2a8ff; }
+  .st { color: #a5d6ff; }
+  .cm { color: var(--text3); font-style: italic; }
+  .nu { color: #79c0ff; }
+  .cl { color: #ffa657; }
+  .op { color: #ff7b72; }
+  .var { color: var(--text); }
+  .imp { color: #ff7b72; }
+  .blt { color: #79c0ff; }
+
+  /* ===== TERMINAL ===== */
+  .terminal {
+    background: #0a0e14;
+    border: 1px solid #2a3040;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    margin: 16px 0;
+    font-size: 13px;
+  }
+  .terminal-bar {
+    background: #161c26;
+    border-bottom: 1px solid #2a3040;
+    padding: 10px 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .term-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .td-r { background: #ff5f57; }
+  .td-y { background: #ffbd2e; }
+  .td-g { background: #28c840; }
+  .term-title { margin-left: 8px; font-size: 12px; color: var(--text3); font-family: var(--font-mono); }
+  .terminal pre {
+    padding: 16px 20px;
+    color: #c0d3f0;
+    line-height: 1.65;
+  }
+  .t-prompt { color: #3fb950; }
+  .t-path { color: #58a6ff; }
+  .t-ok { color: #3fb950; }
+  .t-err { color: #f85149; }
+  .t-info { color: #d29922; }
+  .t-recv { color: #bc8cff; }
+  .t-dim { color: var(--text3); }
+
+  /* ===== ALERT BOXES ===== */
+  .alert {
+    padding: 14px 18px;
+    border-radius: var(--radius);
+    font-size: 14px;
+    margin: 16px 0;
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .alert-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .alert.tip { background: rgba(63,185,80,0.08); border: 1px solid rgba(63,185,80,0.25); color: #8fdf9f; }
+  .alert.warn { background: rgba(210,153,34,0.08); border: 1px solid rgba(210,153,34,0.25); color: #d8a84f; }
+  .alert.info { background: rgba(88,166,255,0.08); border: 1px solid rgba(88,166,255,0.25); color: #80b9ff; }
+
+  /* ===== HARDWARE LIST ===== */
+  .hw-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .hw-item {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  .hw-emoji { font-size: 22px; }
+  .hw-name { font-size: 14px; font-weight: 500; }
+  .hw-sub { font-size: 12px; color: var(--text3); }
+
+  /* ===== WIRING TABLE ===== */
+  .wire-table { width: 100%; border-collapse: collapse; font-size: 14px; margin-bottom: 16px; }
+  .wire-table thead th {
+    text-align: left;
+    padding: 10px 14px;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text3);
+    background: var(--bg3);
+    border-bottom: 1px solid var(--border);
+  }
+  .wire-table tbody tr { border-bottom: 1px solid var(--border); }
+  .wire-table tbody tr:last-child { border-bottom: none; }
+  .wire-table tbody tr:hover { background: var(--bg3); }
+  .wire-table td { padding: 10px 14px; }
+  .wire-label { font-family: var(--font-mono); font-size: 13px; }
+
+  /* ===== TABS ===== */
+  .tab-bar {
+    display: flex;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 24px;
+    gap: 4px;
+  }
+  .tab-btn {
+    padding: 10px 18px;
+    background: none;
+    border: none;
+    color: var(--text3);
+    font-size: 14px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -1px;
+    transition: color 0.15s;
+    font-family: var(--font-sans);
+  }
+  .tab-btn:hover { color: var(--text2); }
+  .tab-btn.active { color: var(--text); border-bottom-color: var(--green); }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* ===== OUTPUT DISPLAY ===== */
+  .output-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media(max-width: 600px) { .output-grid { grid-template-columns: 1fr; } }
+
+  /* ===== FOOTER ===== */
+  footer {
+    padding: 40px 24px;
+    text-align: center;
+    color: var(--text3);
+    font-size: 13px;
+    border-top: 1px solid var(--border);
+  }
+  footer a { color: var(--text2); }
+
+  /* ===== DIVIDER ===== */
+  .dots {
+    text-align: center;
+    color: var(--border2);
+    letter-spacing: 0.5em;
+    padding: 24px 0 0;
+    font-size: 16px;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media(max-width:600px){ pre { font-size: 11px; } .hero h1 { font-size: 26px; } }
+</style>
+</head>
+<body>
+
+<!-- ===================== HERO ===================== -->
+<div class="hero">
+  <div class="hero-badge">Wireless Communication Project</div>
+  <h1>Raspberry Pi 5 +<br><em>SX126X LoRa HAT</em></h1>
+  <p class="hero-sub">Send text messages wirelessly between two Raspberry Pi boards using LoRa radio — no Wi-Fi or internet needed. Complete beginner guide.</p>
+  <div class="hero-chips">
+    <span class="chip teal">Raspberry Pi 5</span>
+    <span class="chip teal">SX126X LoRa HAT</span>
+    <span class="chip green">868 / 915 MHz</span>
+    <span class="chip">Python 3</span>
+    <span class="chip">spidev + RPi.GPIO</span>
+  </div>
+  <div class="hero-toc">
+    <a class="toc-btn" href="#hardware"><span class="num">01</span> Hardware</a>
+    <a class="toc-btn" href="#wiring"><span class="num">02</span> Wiring</a>
+    <a class="toc-btn" href="#diagram"><span class="num">03</span> Diagram</a>
+    <a class="toc-btn" href="#gpio"><span class="num">04</span> GPIO Pins</a>
+    <a class="toc-btn" href="#install"><span class="num">05</span> Install</a>
+    <a class="toc-btn" href="#code"><span class="num">06</span> Code</a>
+    <a class="toc-btn" href="#test"><span class="num">07</span> Testing</a>
+    <a class="toc-btn" href="#output"><span class="num">08</span> Output</a>
+  </div>
+</div>
+
+<!-- ===================== SECTION 1: WHAT YOU NEED ===================== -->
+<div class="section" id="hardware">
+  <div class="container">
+    <div class="section-label"><span class="section-num">01</span><span class="section-tag">Requirements</span></div>
+    <h2>What You Need</h2>
+    <p class="section-intro">Gather this hardware before you begin. You will build the same setup on both Raspberry Pi boards — they are identical.</p>
+
+    <div class="hw-grid">
+      <div class="hw-item"><span class="hw-emoji">🍓</span><div><div class="hw-name">2 × Raspberry Pi 5</div><div class="hw-sub">Any RAM size works (4GB or 8GB)</div></div></div>
+      <div class="hw-item"><span class="hw-emoji">📡</span><div><div class="hw-name">2 × SX126X LoRa HAT</div><div class="hw-sub">Waveshare or compatible (868/915 MHz)</div></div></div>
+      <div class="hw-item"><span class="hw-emoji">💾</span><div><div class="hw-name">2 × microSD Cards</div><div class="hw-sub">16 GB+, with Raspberry Pi OS</div></div></div>
+      <div class="hw-item"><span class="hw-emoji">🔌</span><div><div class="hw-name">2 × USB-C Power Supplies</div><div class="hw-sub">5V 3A — official Pi 5 adapter</div></div></div>
+      <div class="hw-item"><span class="hw-emoji">🔧</span><div><div class="hw-name">GPIO Header Pins</div><div class="hw-sub">HAT plugs directly onto 40-pin header</div></div></div>
+      <div class="hw-item"><span class="hw-emoji">📶</span><div><div class="hw-name">2 × Antennas</div><div class="hw-sub">Usually included with HAT. Must match frequency.</div></div></div>
+    </div>
+
+    <div class="alert warn">
+      <span class="alert-icon">⚠️</span>
+      <div><strong>Antenna required!</strong> Always attach the antenna before powering on. Transmitting without an antenna can permanently damage the LoRa module.</div>
+    </div>
+    <div class="alert info">
+      <span class="alert-icon">ℹ️</span>
+      <div><strong>What is LoRa?</strong> LoRa (Long Range) is a radio technology that can send small messages over long distances (up to several kilometres outdoors) using very little power. It is perfect for sensors, IoT devices, and simple text communication.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SECTION 2: HARDWARE CONNECTIONS ===================== -->
+<div class="section" id="wiring">
+  <div class="container">
+    <div class="section-label"><span class="section-num">02</span><span class="section-tag">Hardware Setup</span></div>
+    <h2>Hardware Connections — Step by Step</h2>
+    <p class="section-intro">Follow these steps for <strong>both</strong> Raspberry Pi boards. The SX126X HAT plugs directly onto the GPIO header — no loose wires needed.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Power off your Raspberry Pi completely</strong>
+          <p>Unplug the USB-C power cable. Never attach a HAT while the board is on — this can short the pins and destroy both the Pi and the HAT.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Attach the antenna to the HAT</strong>
+          <p>Screw or push the antenna connector onto the SMA port on the LoRa HAT. Make sure it is tight. A loose antenna causes poor range or damage.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Align the HAT over the 40-pin GPIO header</strong>
+          <p>The HAT has a matching 40-pin female socket on its underside. Line up pin 1 (the corner near the microSD slot) carefully. Every pin must align — check with a torch before pressing down.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>Press the HAT down firmly and evenly</strong>
+          <p>Apply gentle, even pressure. You will hear/feel a soft click when it is fully seated. Do not force it — if it resists, realign and try again.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <strong>Check the jumper settings on the HAT</strong>
+          <p>Most SX126X HATs have jumpers to select the SPI interface and reset pins. For Raspberry Pi, set them to <code style="background:var(--bg3);padding:1px 6px;border-radius:4px;color:var(--amber2)">SPI0</code> mode. Check your HAT's datasheet if unsure — Waveshare HATs default to SPI0.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">6</div>
+        <div class="step-body">
+          <strong>Power the Pi back on</strong>
+          <p>Reconnect the USB-C power. The HAT's LED (if present) may blink briefly during startup. Repeat all steps for your second Raspberry Pi.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SECTION 3: 3D DIAGRAM ===================== -->
+<div class="section" id="diagram">
+  <div class="container">
+    <div class="section-label"><span class="section-num">03</span><span class="section-tag">Diagrams</span></div>
+    <h2>Connection Diagrams</h2>
+    <p class="section-intro">Visual overview of how the LoRa HAT connects to the Raspberry Pi, and how the two boards communicate over the air.</p>
+
+    <!-- Board + HAT diagram -->
+    <div class="diagram-wrapper">
+      <svg width="100%" viewBox="0 0 680 420" xmlns="http://www.w3.org/2000/svg" role="img">
+        <title>Raspberry Pi 5 with SX126X LoRa HAT — 3D style diagram</title>
+        <desc>Isometric-style illustration showing a Raspberry Pi 5 board with LoRa HAT stacked on top, antenna attached, communicating via radio waves to a second identical stack</desc>
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#3fb950" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+          <marker id="arr2" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="5" markerHeight="5" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#8b949e" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- ===== LEFT STACK (Pi A) ===== -->
+        <!-- Pi board shadow -->
+        <rect x="42" y="248" width="220" height="14" rx="4" fill="#000" opacity="0.35"/>
+        <!-- Pi board body -->
+        <rect x="38" y="220" width="220" height="36" rx="6" fill="#1a2332" stroke="#2a3a50" stroke-width="1.5"/>
+        <rect x="38" y="220" width="220" height="8" rx="4" fill="#1e2f42" stroke="none"/>
+        <!-- Pi board top face -->
+        <rect x="38" y="208" width="220" height="16" rx="4" fill="#1e3a5f" stroke="#2d4f7a" stroke-width="1"/>
+        <!-- Pi green PCB -->
+        <rect x="50" y="200" width="196" height="24" rx="3" fill="#1a3a1a" stroke="#254a25" stroke-width="0.5"/>
+        <!-- Pi chips -->
+        <rect x="100" y="202" width="36" height="20" rx="2" fill="#2a2a2a" stroke="#404040" stroke-width="0.5"/>
+        <rect x="160" y="204" width="22" height="16" rx="2" fill="#1e1e1e" stroke="#333" stroke-width="0.5"/>
+        <!-- GPIO pins strip on Pi -->
+        <rect x="60" y="199" width="96" height="6" rx="1" fill="#1a1a1a"/>
+        <rect x="62" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="66" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="70" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="74" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="78" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="82" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="86" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="90" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="94" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="98" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="102" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="106" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="110" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="114" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="118" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="122" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <!-- Pi label -->
+        <text x="148" y="218" text-anchor="middle" fill="#58a6ff" font-size="11" font-weight="700" font-family="monospace">Raspberry Pi 5</text>
+        <!-- USB-C connector -->
+        <rect x="38" y="207" width="8" height="18" rx="2" fill="#303030" stroke="#555" stroke-width="0.5"/>
+
+        <!-- HAT board (on top of Pi) -->
+        <rect x="44" y="148" width="208" height="8" rx="4" fill="#000" opacity="0.25"/>
+        <rect x="46" y="140" width="208" height="54" rx="6" fill="#1a1025" stroke="#3a2050" stroke-width="1.5"/>
+        <!-- HAT top face -->
+        <rect x="46" y="128" width="208" height="16" rx="4" fill="#251540" stroke="#4a3070" stroke-width="1"/>
+        <!-- HAT PCB -->
+        <rect x="56" y="120" width="188" height="24" rx="3" fill="#1a1030" stroke="#2d1d4d" stroke-width="0.5"/>
+        <!-- SX126X chip on HAT -->
+        <rect x="100" y="122" width="40" height="20" rx="3" fill="#1e1830" stroke="#5a3a80" stroke-width="1"/>
+        <text x="120" y="135" text-anchor="middle" fill="#9060c0" font-size="8" font-weight="700" font-family="monospace">SX1268</text>
+        <!-- HAT socket pins (mating with Pi GPIO) -->
+        <rect x="60" y="143" width="96" height="5" rx="1" fill="#1a1a1a"/>
+        <!-- Crystal/components on HAT -->
+        <rect x="158" y="124" width="14" height="10" rx="2" fill="#2a2020" stroke="#604040" stroke-width="0.5"/>
+        <rect x="180" y="125" width="8" height="8" rx="1" fill="#1e1e1e" stroke="#444" stroke-width="0.5"/>
+        <!-- Coax port on HAT -->
+        <rect x="226" y="124" width="22" height="16" rx="4" fill="#404040" stroke="#666" stroke-width="0.8"/>
+        <circle cx="237" cy="132" r="4" fill="#888" stroke="#aaa" stroke-width="0.5"/>
+        <circle cx="237" cy="132" r="2" fill="#333"/>
+        <!-- HAT label -->
+        <text x="150" y="138" text-anchor="middle" fill="#bc8cff" font-size="11" font-weight="700" font-family="monospace">SX126X LoRa HAT</text>
+
+        <!-- Antenna A -->
+        <line x1="237" y1="110" x2="237" y2="52" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+        <line x1="237" y1="52" x2="248" y2="30" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+        <line x1="237" y1="52" x2="226" y2="30" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="237" cy="110" r="5" fill="#555" stroke="#888" stroke-width="1"/>
+
+        <!-- Pi A label -->
+        <rect x="60" y="262" width="172" height="24" rx="6" fill="rgba(88,166,255,0.12)" stroke="rgba(88,166,255,0.3)" stroke-width="1"/>
+        <text x="146" y="279" text-anchor="middle" fill="#58a6ff" font-size="12" font-weight="700" font-family="monospace">Pi A — SENDER</text>
+
+        <!-- ===== RIGHT STACK (Pi B) ===== -->
+        <!-- Pi board shadow -->
+        <rect x="422" y="248" width="220" height="14" rx="4" fill="#000" opacity="0.35"/>
+        <!-- Pi board body -->
+        <rect x="418" y="220" width="220" height="36" rx="6" fill="#1a2332" stroke="#2a3a50" stroke-width="1.5"/>
+        <rect x="418" y="220" width="220" height="8" rx="4" fill="#1e2f42" stroke="none"/>
+        <!-- Pi board top face -->
+        <rect x="418" y="208" width="220" height="16" rx="4" fill="#1e3a5f" stroke="#2d4f7a" stroke-width="1"/>
+        <!-- Pi green PCB -->
+        <rect x="430" y="200" width="196" height="24" rx="3" fill="#1a3a1a" stroke="#254a25" stroke-width="0.5"/>
+        <!-- Pi chips -->
+        <rect x="480" y="202" width="36" height="20" rx="2" fill="#2a2a2a" stroke="#404040" stroke-width="0.5"/>
+        <rect x="540" y="204" width="22" height="16" rx="2" fill="#1e1e1e" stroke="#333" stroke-width="0.5"/>
+        <!-- GPIO pins strip on Pi B -->
+        <rect x="440" y="199" width="96" height="6" rx="1" fill="#1a1a1a"/>
+        <rect x="442" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="446" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="450" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="454" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="458" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="462" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="466" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="470" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="474" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="478" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="482" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="486" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="490" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="494" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="498" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <rect x="502" y="200" width="2" height="4" fill="#c8a860" rx="0.5"/>
+        <!-- Pi B label -->
+        <text x="528" y="218" text-anchor="middle" fill="#58a6ff" font-size="11" font-weight="700" font-family="monospace">Raspberry Pi 5</text>
+        <!-- USB-C connector B -->
+        <rect x="418" y="207" width="8" height="18" rx="2" fill="#303030" stroke="#555" stroke-width="0.5"/>
+
+        <!-- HAT board B -->
+        <rect x="424" y="148" width="208" height="8" rx="4" fill="#000" opacity="0.25"/>
+        <rect x="426" y="140" width="208" height="54" rx="6" fill="#1a1025" stroke="#3a2050" stroke-width="1.5"/>
+        <rect x="426" y="128" width="208" height="16" rx="4" fill="#251540" stroke="#4a3070" stroke-width="1"/>
+        <rect x="436" y="120" width="188" height="24" rx="3" fill="#1a1030" stroke="#2d1d4d" stroke-width="0.5"/>
+        <rect x="480" y="122" width="40" height="20" rx="3" fill="#1e1830" stroke="#5a3a80" stroke-width="1"/>
+        <text x="500" y="135" text-anchor="middle" fill="#9060c0" font-size="8" font-weight="700" font-family="monospace">SX1268</text>
+        <rect x="440" y="143" width="96" height="5" rx="1" fill="#1a1a1a"/>
+        <rect x="538" y="124" width="14" height="10" rx="2" fill="#2a2020" stroke="#604040" stroke-width="0.5"/>
+        <rect x="560" y="125" width="8" height="8" rx="1" fill="#1e1e1e" stroke="#444" stroke-width="0.5"/>
+        <rect x="424" y="124" width="22" height="16" rx="4" fill="#404040" stroke="#666" stroke-width="0.8"/>
+        <circle cx="435" cy="132" r="4" fill="#888" stroke="#aaa" stroke-width="0.5"/>
+        <circle cx="435" cy="132" r="2" fill="#333"/>
+        <text x="530" y="138" text-anchor="middle" fill="#bc8cff" font-size="11" font-weight="700" font-family="monospace">SX126X LoRa HAT</text>
+
+        <!-- Antenna B -->
+        <line x1="435" y1="110" x2="435" y2="52" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+        <line x1="435" y1="52" x2="446" y2="30" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+        <line x1="435" y1="52" x2="424" y2="30" stroke="#888" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="435" cy="110" r="5" fill="#555" stroke="#888" stroke-width="1"/>
+
+        <!-- Pi B label -->
+        <rect x="440" y="262" width="172" height="24" rx="6" fill="rgba(63,185,80,0.12)" stroke="rgba(63,185,80,0.3)" stroke-width="1"/>
+        <text x="526" y="279" text-anchor="middle" fill="#3fb950" font-size="12" font-weight="700" font-family="monospace">Pi B — RECEIVER</text>
+
+        <!-- ===== RADIO WAVES between antennas ===== -->
+        <!-- Wave arcs with dashes -->
+        <path d="M 300 60 Q 340 30 380 60" fill="none" stroke="#3fb950" stroke-width="1.5" stroke-dasharray="5,4" opacity="0.8"/>
+        <path d="M 290 75 Q 340 40 390 75" fill="none" stroke="#3fb950" stroke-width="1.2" stroke-dasharray="5,5" opacity="0.55"/>
+        <path d="M 280 92 Q 340 52 400 92" fill="none" stroke="#3fb950" stroke-width="1" stroke-dasharray="4,5" opacity="0.35"/>
+
+        <!-- Arrow showing direction -->
+        <line x1="250" y1="68" x2="418" y2="68" stroke="#3fb950" stroke-width="1" stroke-dasharray="6,4" marker-end="url(#arr)" opacity="0.5"/>
+        <text x="334" y="64" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="700" font-family="monospace">LoRa Radio</text>
+        <text x="334" y="99" text-anchor="middle" fill="#6e7681" font-size="10" font-family="monospace">868 / 915 MHz</text>
+
+        <!-- SPI connection labels left -->
+        <text x="30" y="168" text-anchor="end" fill="#8b949e" font-size="9" font-family="monospace">SPI0</text>
+        <text x="30" y="178" text-anchor="end" fill="#8b949e" font-size="9" font-family="monospace">MOSI</text>
+        <text x="30" y="188" text-anchor="end" fill="#8b949e" font-size="9" font-family="monospace">MISO</text>
+        <text x="30" y="198" text-anchor="end" fill="#8b949e" font-size="9" font-family="monospace">SCK</text>
+        <!-- SPI connection labels right -->
+        <text x="650" y="168" text-anchor="start" fill="#8b949e" font-size="9" font-family="monospace">SPI0</text>
+        <text x="650" y="178" text-anchor="start" fill="#8b949e" font-size="9" font-family="monospace">MOSI</text>
+        <text x="650" y="188" text-anchor="start" fill="#8b949e" font-size="9" font-family="monospace">MISO</text>
+        <text x="650" y="198" text-anchor="start" fill="#8b949e" font-size="9" font-family="monospace">SCK</text>
+
+        <!-- Stack arrows -->
+        <path d="M148 120 L148 145" fill="none" stroke="#4a3070" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr2)"/>
+        <path d="M528 120 L528 145" fill="none" stroke="#4a3070" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr2)"/>
+        <text x="148" y="118" text-anchor="middle" fill="#6e7681" font-size="9" font-family="monospace">40-pin GPIO</text>
+        <text x="528" y="118" text-anchor="middle" fill="#6e7681" font-size="9" font-family="monospace">40-pin GPIO</text>
+
+        <!-- Title -->
+        <text x="340" y="310" text-anchor="middle" fill="#6e7681" font-size="12" font-family="monospace">Two identical stacks communicate wirelessly via LoRa radio</text>
+
+        <!-- Ground lines -->
+        <line x1="38" y1="256" x2="258" y2="256" stroke="#2a3a50" stroke-width="0.5"/>
+        <line x1="418" y1="256" x2="638" y2="256" stroke="#2a3a50" stroke-width="0.5"/>
+      </svg>
+    </div>
+
+    <!-- System flow diagram -->
+    <p style="color:var(--text2); font-size:14px; margin-bottom:16px;">Here is the data flow — from your Python script all the way to the other terminal screen:</p>
+    <div class="diagram-wrapper">
+      <svg width="100%" viewBox="0 0 680 120" xmlns="http://www.w3.org/2000/svg" role="img">
+        <title>Data flow diagram</title>
+        <desc>Sequence of steps: sender.py → SPI bus → SX126X chip → radio waves → SX126X chip → SPI bus → receiver.py → terminal</desc>
+        <defs>
+          <marker id="af" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="#3fb950" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </marker>
+        </defs>
+
+        <!-- Nodes -->
+        <g>
+          <rect x="10" y="36" width="90" height="40" rx="8" fill="rgba(88,166,255,0.1)" stroke="rgba(88,166,255,0.4)" stroke-width="1"/>
+          <text x="55" y="54" text-anchor="middle" fill="#58a6ff" font-size="12" font-weight="600" font-family="monospace">sender.py</text>
+          <text x="55" y="68" text-anchor="middle" fill="#58a6ff" font-size="10" font-family="monospace">Pi A</text>
+        </g>
+        <line x1="100" y1="56" x2="126" y2="56" stroke="#3fb950" stroke-width="1.5" marker-end="url(#af)"/>
+        <text x="113" y="49" text-anchor="middle" fill="#6e7681" font-size="9" font-family="monospace">SPI</text>
+
+        <g>
+          <rect x="126" y="36" width="90" height="40" rx="8" fill="rgba(188,140,255,0.1)" stroke="rgba(188,140,255,0.4)" stroke-width="1"/>
+          <text x="171" y="54" text-anchor="middle" fill="#bc8cff" font-size="11" font-weight="600" font-family="monospace">SX1268</text>
+          <text x="171" y="68" text-anchor="middle" fill="#bc8cff" font-size="10" font-family="monospace">LoRa chip A</text>
+        </g>
+        <line x1="216" y1="56" x2="242" y2="56" stroke="#3fb950" stroke-width="1.5" marker-end="url(#af)" stroke-dasharray="4,3"/>
+        <text x="229" y="49" text-anchor="middle" fill="#6e7681" font-size="9" font-family="monospace">868MHz</text>
+
+        <g>
+          <rect x="242" y="36" width="90" height="40" rx="8" fill="rgba(63,185,80,0.1)" stroke="rgba(63,185,80,0.4)" stroke-width="1"/>
+          <text x="287" y="54" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="600" font-family="monospace">antenna</text>
+          <text x="287" y="68" text-anchor="middle" fill="#3fb950" font-size="10" font-family="monospace">radio waves</text>
+        </g>
+        <line x1="332" y1="56" x2="358" y2="56" stroke="#3fb950" stroke-width="1.5" marker-end="url(#af)" stroke-dasharray="4,3"/>
+
+        <g>
+          <rect x="358" y="36" width="90" height="40" rx="8" fill="rgba(63,185,80,0.1)" stroke="rgba(63,185,80,0.4)" stroke-width="1"/>
+          <text x="403" y="54" text-anchor="middle" fill="#3fb950" font-size="11" font-weight="600" font-family="monospace">antenna</text>
+          <text x="403" y="68" text-anchor="middle" fill="#3fb950" font-size="10" font-family="monospace">Pi B</text>
+        </g>
+        <line x1="448" y1="56" x2="474" y2="56" stroke="#3fb950" stroke-width="1.5" marker-end="url(#af)" stroke-dasharray="4,3"/>
+        <text x="461" y="49" text-anchor="middle" fill="#6e7681" font-size="9" font-family="monospace">SPI</text>
+
+        <g>
+          <rect x="474" y="36" width="90" height="40" rx="8" fill="rgba(188,140,255,0.1)" stroke="rgba(188,140,255,0.4)" stroke-width="1"/>
+          <text x="519" y="54" text-anchor="middle" fill="#bc8cff" font-size="11" font-weight="600" font-family="monospace">SX1268</text>
+          <text x="519" y="68" text-anchor="middle" fill="#bc8cff" font-size="10" font-family="monospace">LoRa chip B</text>
+        </g>
+        <line x1="564" y1="56" x2="590" y2="56" stroke="#3fb950" stroke-width="1.5" marker-end="url(#af)"/>
+        <text x="577" y="49" text-anchor="middle" fill="#6e7681" font-size="9" font-family="monospace">SPI</text>
+
+        <g>
+          <rect x="590" y="36" width="90" height="40" rx="8" fill="rgba(88,166,255,0.1)" stroke="rgba(88,166,255,0.4)" stroke-width="1"/>
+          <text x="635" y="54" text-anchor="middle" fill="#58a6ff" font-size="12" font-weight="600" font-family="monospace">receiver.py</text>
+          <text x="635" y="68" text-anchor="middle" fill="#58a6ff" font-size="10" font-family="monospace">Pi B</text>
+        </g>
+
+        <text x="340" y="108" text-anchor="middle" fill="#3e4550" font-size="10" font-family="monospace">— — — over-the-air LoRa transmission — — —</text>
+      </svg>
+    </div>
+
+  </div>
+</div>
+
+<!-- ===================== SECTION 4: GPIO TABLE ===================== -->
+<div class="section" id="gpio">
+  <div class="container">
+    <div class="section-label"><span class="section-num">04</span><span class="section-tag">Pin Mapping</span></div>
+    <h2>GPIO Pin Connections</h2>
+    <p class="section-intro">The SX126X HAT uses the SPI0 bus plus a few control pins. These are the same for both Raspberry Pi boards — the HAT plugs directly on, so no extra wiring is needed.</p>
+
+    <div class="gpio-grid">
+      <div class="gpio-card">
+        <div class="gpio-card-head pi-a">📡 Pi A &amp; Pi B — SX126X HAT Pin Map</div>
+        <table class="gpio-table">
+          <thead><tr><th>HAT Signal</th><th>GPIO (BCM)</th><th>Physical Pin</th><th>Function</th></tr></thead>
+          <tbody>
+            <tr><td><span class="pin-badge red">3.3V</span></td><td>—</td><td>Pin 1 / 17</td><td>Power</td></tr>
+            <tr><td><span class="pin-badge teal">GND</span></td><td>—</td><td>Pin 6 / 9 / 14</td><td>Ground</td></tr>
+            <tr><td><span class="pin-badge green">MOSI</span></td><td>GPIO 10</td><td>Pin 19</td><td>SPI Data OUT</td></tr>
+            <tr><td><span class="pin-badge green">MISO</span></td><td>GPIO 9</td><td>Pin 21</td><td>SPI Data IN</td></tr>
+            <tr><td><span class="pin-badge green">SCK</span></td><td>GPIO 11</td><td>Pin 23</td><td>SPI Clock</td></tr>
+            <tr><td><span class="pin-badge amber">NSS / CS</span></td><td>GPIO 8</td><td>Pin 24</td><td>SPI Chip Select</td></tr>
+            <tr><td><span class="pin-badge purple">RESET</span></td><td>GPIO 18</td><td>Pin 12</td><td>Module Reset</td></tr>
+            <tr><td><span class="pin-badge purple">DIO1 / IRQ</span></td><td>GPIO 16</td><td>Pin 36</td><td>Interrupt / Done</td></tr>
+            <tr><td><span class="pin-badge purple">BUSY</span></td><td>GPIO 20</td><td>Pin 38</td><td>Busy Status</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="gpio-card">
+        <div class="gpio-card-head">📋 Raspberry Pi 5 — 40-Pin Header Reference</div>
+        <table class="gpio-table">
+          <thead><tr><th>Pin #</th><th>Signal</th><th>Pin #</th><th>Signal</th></tr></thead>
+          <tbody>
+            <tr><td>1</td><td style="color:var(--red)">3.3V</td><td>2</td><td style="color:var(--red)">5V</td></tr>
+            <tr><td>3</td><td>GPIO2</td><td>4</td><td style="color:var(--red)">5V</td></tr>
+            <tr><td>5</td><td>GPIO3</td><td>6</td><td style="color:var(--teal)">GND</td></tr>
+            <tr><td>11</td><td>GPIO17</td><td>12</td><td style="color:var(--purple)">GPIO18 ← RST</td></tr>
+            <tr><td>19</td><td style="color:var(--green)">GPIO10 MOSI</td><td>20</td><td style="color:var(--teal)">GND</td></tr>
+            <tr><td>21</td><td style="color:var(--green)">GPIO9 MISO</td><td>22</td><td>GPIO25</td></tr>
+            <tr><td>23</td><td style="color:var(--green)">GPIO11 SCK</td><td>24</td><td style="color:var(--amber)">GPIO8 CE0</td></tr>
+            <tr><td>36</td><td style="color:var(--purple)">GPIO16 ← DIO1</td><td>38</td><td style="color:var(--purple)">GPIO20 ← BUSY</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="alert tip">
+      <span class="alert-icon">💡</span>
+      <div>Since the HAT plugs directly onto the 40-pin header, all these connections happen automatically. You only need to look at these pin numbers if you are building a custom wiring setup or debugging a problem.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SECTION 5: INSTALL ===================== -->
+<div class="section" id="install">
+  <div class="container">
+    <div class="section-label"><span class="section-num">05</span><span class="section-tag">Setup</span></div>
+    <h2>Install Required Libraries</h2>
+    <p class="section-intro">Run these commands on <strong>both</strong> Raspberry Pi boards. Open a terminal (press Ctrl+Alt+T or use the Applications menu).</p>
+
+    <p style="font-size:14px; color:var(--text2); margin-bottom:12px;"><strong style="color:var(--text)">Step 1 — Enable SPI.</strong> The SX126X HAT talks over SPI. You must turn it on first:</p>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename">🖥 Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="t-prompt">$</span> sudo raspi-config
+<span class="t-dim"># Navigate to: Interface Options → SPI → Enable → Yes → Finish</span>
+<span class="t-prompt">$</span> sudo reboot</pre>
+    </div>
+
+    <p style="font-size:14px; color:var(--text2); margin: 24px 0 12px;"><strong style="color:var(--text)">Step 2 — Update the system and install Python tools:</strong></p>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename">🖥 Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="t-prompt">$</span> sudo apt update && sudo apt upgrade -y
+<span class="t-prompt">$</span> sudo apt install python3-pip python3-dev -y</pre>
+    </div>
+
+    <p style="font-size:14px; color:var(--text2); margin: 24px 0 12px;"><strong style="color:var(--text)">Step 3 — Install the Python libraries for SPI and GPIO:</strong></p>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename">🖥 Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="t-prompt">$</span> pip3 install spidev RPi.GPIO</pre>
+    </div>
+
+    <p style="font-size:14px; color:var(--text2); margin: 24px 0 12px;"><strong style="color:var(--text)">Step 4 — Verify SPI is active after reboot:</strong></p>
+    <div class="code-block">
+      <div class="code-header">
+        <span class="code-filename">🖥 Terminal</span>
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+      </div>
+      <pre><span class="t-prompt">$</span> ls /dev/spidev*
+<span class="t-ok">/dev/spidev0.0  /dev/spidev0.1</span>
+<span class="t-dim"># If you see these two files, SPI is working correctly!</span></pre>
+    </div>
+
+    <div class="alert tip">
+      <span class="alert-icon">💡</span>
+      <div>If <code style="background:var(--bg3);padding:1px 6px;border-radius:4px;color:var(--amber2)">/dev/spidev*</code> shows nothing, SPI is not enabled. Go back to <code>raspi-config</code> and enable it again, then reboot.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SECTION 6: CODE ===================== -->
+<div class="section" id="code">
+  <div class="container">
+    <div class="section-label"><span class="section-num">06</span><span class="section-tag">Python Code</span></div>
+    <h2>Complete Python Code</h2>
+    <p class="section-intro">Create these two files. <code style="background:var(--bg3);padding:2px 8px;border-radius:4px;color:var(--amber2)">sender.py</code> goes on Pi A. <code style="background:var(--bg3);padding:2px 8px;border-radius:4px;color:var(--green)">receiver.py</code> goes on Pi B.</p>
+
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="switchTab(this,'sender')">📤 sender.py (Pi A)</button>
+      <button class="tab-btn" onclick="switchTab(this,'receiver')">📥 receiver.py (Pi B)</button>
+      <button class="tab-btn" onclick="switchTab(this,'lora')">🔧 lora_module.py (both)</button>
+    </div>
+
+    <div id="tab-sender" class="tab-pane active">
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">📄 sender.py — run on Pi A</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="code-lang">Python 3</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+        </div>
+        <pre id="code-sender"><span class="cm">#!/usr/bin/env python3</span>
+<span class="cm">"""
+sender.py  —  Run this on Raspberry Pi A
+Sends a text message over LoRa radio to Pi B
+"""</span>
+
+<span class="imp">import</span> <span class="cl">time</span>
+<span class="imp">import</span> <span class="cl">spidev</span>
+<span class="imp">import</span> <span class="cl">RPi.GPIO</span> <span class="kw">as</span> GPIO
+<span class="imp">from</span> <span class="cl">lora_module</span> <span class="imp">import</span> SX126X
+
+<span class="cm"># ── GPIO pin numbers (BCM numbering) ──────────────────────</span>
+RESET_PIN = <span class="nu">18</span>   <span class="cm"># Physical pin 12  — HAT RESET</span>
+BUSY_PIN  = <span class="nu">20</span>   <span class="cm"># Physical pin 38  — HAT BUSY</span>
+DIO1_PIN  = <span class="nu">16</span>   <span class="cm"># Physical pin 36  — HAT DIO1/IRQ</span>
+CS_PIN    = <span class="nu">8</span>    <span class="cm"># Physical pin 24  — SPI0 CE0</span>
+
+<span class="cm"># ── LoRa radio settings ────────────────────────────────────</span>
+<span class="cm"># IMPORTANT: Both Pi A and Pi B must use IDENTICAL settings!</span>
+FREQUENCY   = <span class="nu">868.0</span>  <span class="cm"># MHz — use 915.0 for USA/Canada</span>
+BANDWIDTH   = <span class="nu">125</span>    <span class="cm"># kHz — wider = faster but less range</span>
+SPREAD_FACTOR = <span class="nu">7</span>    <span class="cm"># 7–12 — higher = longer range but slower</span>
+CODING_RATE   = <span class="nu">5</span>    <span class="cm"># 5–8  — error correction rate</span>
+TX_POWER      = <span class="nu">14</span>   <span class="cm"># dBm  — transmit power (max ~22 for SX1268)</span>
+
+<span class="kw">def</span> <span class="fn">main</span>():
+    <span class="blt">print</span>(<span class="st">"==================================="</span>)
+    <span class="blt">print</span>(<span class="st">"  LoRa Sender — Raspberry Pi A"</span>)
+    <span class="blt">print</span>(<span class="st">"==================================="</span>)
+
+    <span class="cm"># Set up GPIO</span>
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(<span class="kw">False</span>)
+
+    <span class="cm"># Create LoRa radio object</span>
+    lora = SX126X(
+        spi_bus=<span class="nu">0</span>,
+        spi_device=<span class="nu">0</span>,
+        cs_pin=CS_PIN,
+        reset_pin=RESET_PIN,
+        busy_pin=BUSY_PIN,
+        dio1_pin=DIO1_PIN
+    )
+
+    <span class="cm"># Initialise the module</span>
+    lora.begin()
+    lora.set_frequency(FREQUENCY)
+    lora.set_bandwidth(BANDWIDTH)
+    lora.set_spreading_factor(SPREAD_FACTOR)
+    lora.set_coding_rate(CODING_RATE)
+    lora.set_tx_power(TX_POWER)
+
+    <span class="blt">print</span>(<span class="st">f"[OK] LoRa ready at <span class="kw">{</span>FREQUENCY<span class="kw">}</span> MHz"</span>)
+    <span class="blt">print</span>(<span class="st">"[INFO] Sending messages every 5 seconds..."</span>)
+    <span class="blt">print</span>(<span class="st">"[INFO] Press Ctrl+C to stop.\n"</span>)
+
+    message_count = <span class="nu">1</span>
+
+    <span class="kw">try</span>:
+        <span class="kw">while True</span>:
+            <span class="cm"># Build the message string</span>
+            message = <span class="st">f"Hello from Pi A! Message #{message_count}"</span>
+
+            <span class="blt">print</span>(<span class="st">f"[TX] Sending: '{message}'"</span>)
+
+            <span class="cm"># Encode to bytes and transmit</span>
+            lora.transmit(message.encode(<span class="st">'utf-8'</span>))
+
+            <span class="blt">print</span>(<span class="st">f"[TX] Sent! Waiting 5 seconds...\n"</span>)
+
+            message_count += <span class="nu">1</span>
+            time.sleep(<span class="nu">5</span>)
+
+    <span class="kw">except</span> KeyboardInterrupt:
+        <span class="blt">print</span>(<span class="st">"\n[STOP] Sender stopped by user."</span>)
+
+    <span class="kw">finally</span>:
+        lora.sleep()
+        GPIO.cleanup()
+        <span class="blt">print</span>(<span class="st">"[OK] GPIO cleaned up."</span>)
+
+<span class="kw">if</span> __name__ == <span class="st">"__main__"</span>:
+    main()</pre>
+      </div>
+    </div>
+
+    <div id="tab-receiver" class="tab-pane">
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">📄 receiver.py — run on Pi B</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="code-lang">Python 3</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+        </div>
+        <pre id="code-receiver"><span class="cm">#!/usr/bin/env python3</span>
+<span class="cm">"""
+receiver.py  —  Run this on Raspberry Pi B
+Listens for LoRa messages and prints them on screen
+"""</span>
+
+<span class="imp">import</span> <span class="cl">time</span>
+<span class="imp">import</span> <span class="cl">spidev</span>
+<span class="imp">import</span> <span class="cl">RPi.GPIO</span> <span class="kw">as</span> GPIO
+<span class="imp">from</span> <span class="cl">lora_module</span> <span class="imp">import</span> SX126X
+
+<span class="cm"># ── GPIO pin numbers (same as sender!) ───────────────────</span>
+RESET_PIN = <span class="nu">18</span>
+BUSY_PIN  = <span class="nu">20</span>
+DIO1_PIN  = <span class="nu">16</span>
+CS_PIN    = <span class="nu">8</span>
+
+<span class="cm"># ── LoRa settings (MUST match sender.py exactly!) ────────</span>
+FREQUENCY     = <span class="nu">868.0</span>
+BANDWIDTH     = <span class="nu">125</span>
+SPREAD_FACTOR = <span class="nu">7</span>
+CODING_RATE   = <span class="nu">5</span>
+
+<span class="kw">def</span> <span class="fn">on_receive</span>(rssi, snr, data):
+    <span class="cm">"""Called automatically when a packet arrives."""</span>
+    timestamp = time.strftime(<span class="st">"%H:%M:%S"</span>)
+    <span class="kw">try</span>:
+        message = data.decode(<span class="st">'utf-8'</span>)
+    <span class="kw">except</span>:
+        message = <span class="st">f"[binary data: {data.hex()}]"</span>
+
+    <span class="blt">print</span>(<span class="st">f"\n┌─────────────────────────────────"</span>)
+    <span class="blt">print</span>(<span class="st">f"│ 📨 MESSAGE RECEIVED at {timestamp}"</span>)
+    <span class="blt">print</span>(<span class="st">f"│ Content : {message}"</span>)
+    <span class="blt">print</span>(<span class="st">f"│ RSSI    : {rssi} dBm  (signal strength)"</span>)
+    <span class="blt">print</span>(<span class="st">f"│ SNR     : {snr} dB   (signal quality)"</span>)
+    <span class="blt">print</span>(<span class="st">f"└─────────────────────────────────"</span>)
+
+<span class="kw">def</span> <span class="fn">main</span>():
+    <span class="blt">print</span>(<span class="st">"==================================="</span>)
+    <span class="blt">print</span>(<span class="st">"  LoRa Receiver — Raspberry Pi B"</span>)
+    <span class="blt">print</span>(<span class="st">"==================================="</span>)
+
+    <span class="cm"># Set up GPIO</span>
+    GPIO.setmode(GPIO.BCM)
+    GPIO.setwarnings(<span class="kw">False</span>)
+
+    <span class="cm"># Create LoRa radio object</span>
+    lora = SX126X(
+        spi_bus=<span class="nu">0</span>,
+        spi_device=<span class="nu">0</span>,
+        cs_pin=CS_PIN,
+        reset_pin=RESET_PIN,
+        busy_pin=BUSY_PIN,
+        dio1_pin=DIO1_PIN
+    )
+
+    <span class="cm"># Initialise — settings MUST match sender!</span>
+    lora.begin()
+    lora.set_frequency(FREQUENCY)
+    lora.set_bandwidth(BANDWIDTH)
+    lora.set_spreading_factor(SPREAD_FACTOR)
+    lora.set_coding_rate(CODING_RATE)
+
+    <span class="cm"># Register our callback function</span>
+    lora.on_receive = on_receive
+
+    <span class="cm"># Put the radio into continuous receive mode</span>
+    lora.receive()
+
+    <span class="blt">print</span>(<span class="st">f"[OK] Listening on {FREQUENCY} MHz..."</span>)
+    <span class="blt">print</span>(<span class="st">"[INFO] Waiting for messages from Pi A..."</span>)
+    <span class="blt">print</span>(<span class="st">"[INFO] Press Ctrl+C to stop.\n"</span>)
+
+    <span class="kw">try</span>:
+        <span class="kw">while True</span>:
+            <span class="cm"># Poll for incoming packets every 100 ms</span>
+            lora.poll()
+            time.sleep(<span class="nu">0.1</span>)
+
+    <span class="kw">except</span> KeyboardInterrupt:
+        <span class="blt">print</span>(<span class="st">"\n[STOP] Receiver stopped by user."</span>)
+
+    <span class="kw">finally</span>:
+        lora.sleep()
+        GPIO.cleanup()
+        <span class="blt">print</span>(<span class="st">"[OK] GPIO cleaned up."</span>)</pre>
+      </div>
+    </div>
+
+    <div id="tab-lora" class="tab-pane">
+      <p style="color:var(--text2);font-size:14px;margin-bottom:12px;">This helper module wraps the low-level SPI commands into simple Python functions. Save it as <strong style="color:var(--amber2)">lora_module.py</strong> in the same folder as both sender.py and receiver.py — on <strong>both</strong> Pi boards.</p>
+      <div class="code-block">
+        <div class="code-header">
+          <span class="code-filename">📄 lora_module.py — copy to BOTH boards</span>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span class="code-lang">Python 3</span>
+            <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+          </div>
+        </div>
+        <pre id="code-lora"><span class="cm">#!/usr/bin/env python3</span>
+<span class="cm">"""
+lora_module.py — SX126X driver for Raspberry Pi
+Provides simple send/receive wrappers over SPI.
+Copy this file to BOTH Pi A and Pi B.
+"""</span>
+
+<span class="imp">import</span> <span class="cl">time</span>
+<span class="imp">import</span> <span class="cl">spidev</span>
+<span class="imp">import</span> <span class="cl">RPi.GPIO</span> <span class="kw">as</span> GPIO
+
+<span class="cm"># ── SX126X SPI command codes ──────────────────────────────</span>
+_CMD_SET_SLEEP          = <span class="nu">0x84</span>
+_CMD_SET_STANDBY        = <span class="nu">0x80</span>
+_CMD_SET_PACKET_TYPE    = <span class="nu">0x8A</span>
+_CMD_SET_RF_FREQUENCY   = <span class="nu">0x86</span>
+_CMD_SET_TX_PARAMS      = <span class="nu">0x8E</span>
+_CMD_SET_MODULATION     = <span class="nu">0x8B</span>
+_CMD_SET_PACKET_PARAMS  = <span class="nu">0x8C</span>
+_CMD_SET_TX             = <span class="nu">0x83</span>
+_CMD_SET_RX             = <span class="nu">0x82</span>
+_CMD_WRITE_BUFFER       = <span class="nu">0x0E</span>
+_CMD_READ_BUFFER        = <span class="nu">0x1E</span>
+_CMD_GET_IRQ_STATUS     = <span class="nu">0x12</span>
+_CMD_CLEAR_IRQ          = <span class="nu">0x02</span>
+_CMD_GET_RX_BUFFER_STATUS = <span class="nu">0x13</span>
+_CMD_GET_PACKET_STATUS  = <span class="nu">0x14</span>
+_CMD_SET_DIO_IRQ        = <span class="nu">0x08</span>
+_CMD_CALIBRATE          = <span class="nu">0x89</span>
+
+_XTAL_FREQ = <span class="nu">32e6</span>   <span class="cm"># 32 MHz crystal</span>
+_PREAMBLE_LEN = <span class="nu">12</span>  <span class="cm"># symbols</span>
+
+
+<span class="kw">class</span> <span class="cl">SX126X</span>:
+    <span class="st">"""
+    Minimal SX126X (SX1261/SX1262/SX1268) driver.
+    Supports LoRa packet mode with simple TX/RX.
+    """</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(self, spi_bus, spi_device, cs_pin,
+                  reset_pin, busy_pin, dio1_pin):
+        self.spi_bus    = spi_bus
+        self.spi_device = spi_device
+        self.cs_pin     = cs_pin
+        self.reset_pin  = reset_pin
+        self.busy_pin   = busy_pin
+        self.dio1_pin   = dio1_pin
+        self.on_receive = <span class="kw">None</span>   <span class="cm"># Set this to a callback function</span>
+        self._spi       = <span class="kw">None</span>
+        self._rx_buffer_size = <span class="nu">0</span>
+        self._rx_buffer_offset = <span class="nu">0</span>
+
+    <span class="cm"># ── Initialisation ─────────────────────────────────────</span>
+    <span class="kw">def</span> <span class="fn">begin</span>(self):
+        <span class="st">"""Set up SPI, GPIO, and put the module in standby."""</span>
+        GPIO.setup(self.reset_pin, GPIO.OUT)
+        GPIO.setup(self.busy_pin,  GPIO.IN)
+        GPIO.setup(self.dio1_pin,  GPIO.IN)
+
+        <span class="cm"># Hard reset the module</span>
+        GPIO.output(self.reset_pin, GPIO.LOW)
+        time.sleep(<span class="nu">0.01</span>)
+        GPIO.output(self.reset_pin, GPIO.HIGH)
+        time.sleep(<span class="nu">0.1</span>)
+        self._wait_busy()
+
+        <span class="cm"># Open SPI bus</span>
+        self._spi = spidev.SpiDev()
+        self._spi.open(self.spi_bus, self.spi_device)
+        self._spi.max_speed_hz = <span class="nu">2_000_000</span>  <span class="cm"># 2 MHz SPI clock</span>
+        self._spi.mode = <span class="nu">0</span>
+
+        <span class="cm"># Standby mode, then select LoRa packet type</span>
+        self._cmd([_CMD_SET_STANDBY, <span class="nu">0x00</span>])  <span class="cm"># STDBY_RC</span>
+        self._cmd([_CMD_SET_PACKET_TYPE, <span class="nu">0x01</span>])  <span class="cm"># LoRa mode</span>
+        self._cmd([_CMD_CALIBRATE, <span class="nu">0x7F</span>])    <span class="cm"># Calibrate all</span>
+        time.sleep(<span class="nu">0.01</span>)
+        self._wait_busy()
+
+    <span class="cm"># ── Configuration methods ──────────────────────────────</span>
+    <span class="kw">def</span> <span class="fn">set_frequency</span>(self, freq_mhz):
+        <span class="st">"""Set LoRa carrier frequency in MHz."""</span>
+        frf = <span class="blt">int</span>((freq_mhz * <span class="nu">1e6</span> / _XTAL_FREQ) * (<span class="nu">1</span> &lt;&lt; <span class="nu">25</span>))
+        self._cmd([
+            _CMD_SET_RF_FREQUENCY,
+            (frf &gt;&gt; <span class="nu">24</span>) &amp; <span class="nu">0xFF</span>,
+            (frf &gt;&gt; <span class="nu">16</span>) &amp; <span class="nu">0xFF</span>,
+            (frf &gt;&gt;  <span class="nu">8</span>) &amp; <span class="nu">0xFF</span>,
+             frf        &amp; <span class="nu">0xFF</span>,
+        ])
+
+    <span class="kw">def</span> <span class="fn">set_tx_power</span>(self, dbm):
+        <span class="st">"""Set transmit power in dBm (2..22 for SX1268)."""</span>
+        dbm = <span class="blt">max</span>(<span class="nu">2</span>, <span class="blt">min</span>(<span class="nu">22</span>, dbm))
+        self._cmd([_CMD_SET_TX_PARAMS, dbm, <span class="nu">0x04</span>])  <span class="cm"># ramp 200 µs</span>
+
+    <span class="kw">def</span> <span class="fn">set_bandwidth</span>(self, bw_khz):
+        <span class="st">"""Set LoRa bandwidth. Options: 125, 250, 500 kHz."""</span>
+        bw_map = {<span class="nu">125</span>: <span class="nu">4</span>, <span class="nu">250</span>: <span class="nu">5</span>, <span class="nu">500</span>: <span class="nu">6</span>}
+        self._bw = bw_map.get(bw_khz, <span class="nu">4</span>)
+
+    <span class="kw">def</span> <span class="fn">set_spreading_factor</span>(self, sf):
+        <span class="st">"""Set spreading factor (7–12). Higher = longer range."""</span>
+        self._sf = <span class="blt">max</span>(<span class="nu">5</span>, <span class="blt">min</span>(<span class="nu">12</span>, sf))
+
+    <span class="kw">def</span> <span class="fn">set_coding_rate</span>(self, cr):
+        <span class="st">"""Set coding rate denominator (5–8)."""</span>
+        self._cr = <span class="blt">max</span>(<span class="nu">5</span>, <span class="blt">min</span>(<span class="nu">8</span>, cr)) - <span class="nu">4</span>
+
+    <span class="kw">def</span> <span class="fn">_apply_modulation</span>(self):
+        <span class="st">"""Push modulation settings to the chip."""</span>
+        ldro = <span class="nu">1</span> <span class="kw">if</span> self._sf &gt;= <span class="nu">11</span> <span class="kw">else</span> <span class="nu">0</span>
+        self._cmd([_CMD_SET_MODULATION,
+                   self._sf, self._bw, self._cr, ldro])
+
+    <span class="cm"># ── TX — transmit one packet ───────────────────────────</span>
+    <span class="kw">def</span> <span class="fn">transmit</span>(self, data: bytes):
+        <span class="st">"""Send a bytes payload. Blocks until TX completes."""</span>
+        self._cmd([_CMD_SET_STANDBY, <span class="nu">0x00</span>])
+        self._apply_modulation()
+
+        payload_len = <span class="blt">len</span>(data)
+        self._cmd([_CMD_SET_PACKET_PARAMS,
+                   (_PREAMBLE_LEN &gt;&gt; <span class="nu">8</span>) &amp; <span class="nu">0xFF</span>,
+                    _PREAMBLE_LEN        &amp; <span class="nu">0xFF</span>,
+                   <span class="nu">0x00</span>,          <span class="cm"># explicit header</span>
+                   payload_len,
+                   <span class="nu">0x01</span>,          <span class="cm"># CRC on</span>
+                   <span class="nu">0x00</span>])         <span class="cm"># IQ standard</span>
+
+        <span class="cm"># Write payload to chip FIFO</span>
+        self._cmd([_CMD_WRITE_BUFFER, <span class="nu">0x00</span>] + <span class="blt">list</span>(data))
+        self._wait_busy()
+
+        <span class="cm"># Trigger transmit (timeout ~5 s)</span>
+        self._cmd([_CMD_SET_TX, <span class="nu">0x09</span>, <span class="nu">0xC4</span>, <span class="nu">0x00</span>])
+        timeout = time.time() + <span class="nu">6</span>
+        <span class="kw">while</span> time.time() &lt; timeout:
+            irq = self._get_irq()
+            <span class="kw">if</span> irq &amp; <span class="nu">0x01</span>:  <span class="cm"># TxDone</span>
+                self._cmd([_CMD_CLEAR_IRQ, <span class="nu">0xFF</span>, <span class="nu">0xFF</span>])
+                <span class="kw">return True</span>
+            time.sleep(<span class="nu">0.01</span>)
+        <span class="kw">raise</span> TimeoutError(<span class="st">"LoRa TX timeout — no TxDone IRQ"</span>)
+
+    <span class="cm"># ── RX — continuous receive mode ──────────────────────</span>
+    <span class="kw">def</span> <span class="fn">receive</span>(self):
+        <span class="st">"""Start continuous receive mode."""</span>
+        self._cmd([_CMD_SET_STANDBY, <span class="nu">0x00</span>])
+        self._apply_modulation()
+        self._cmd([_CMD_SET_PACKET_PARAMS,
+                   <span class="nu">0x00</span>, <span class="nu">0x0C</span>,  <span class="cm"># preamble 12</span>
+                   <span class="nu">0x00</span>,          <span class="cm"># explicit header</span>
+                   <span class="nu">0xFF</span>,          <span class="cm"># max payload 255 bytes</span>
+                   <span class="nu">0x01</span>,          <span class="cm"># CRC on</span>
+                   <span class="nu">0x00</span>])
+        <span class="cm"># Enable RxDone + CRC error IRQs on DIO1</span>
+        self._cmd([_CMD_SET_DIO_IRQ,
+                   <span class="nu">0xFF</span>, <span class="nu">0xFF</span>,  <span class="cm"># all IRQs enabled</span>
+                   <span class="nu">0x02</span>, <span class="nu">0x02</span>,  <span class="cm"># DIO1 → RxDone</span>
+                   <span class="nu">0x00</span>, <span class="nu">0x00</span>,  <span class="cm"># DIO2 off</span>
+                   <span class="nu">0x00</span>, <span class="nu">0x00</span>]) <span class="cm"># DIO3 off</span>
+        <span class="cm"># Continuous RX (no timeout)</span>
+        self._cmd([_CMD_SET_RX, <span class="nu">0xFF</span>, <span class="nu">0xFF</span>, <span class="nu">0xFF</span>])
+
+    <span class="kw">def</span> <span class="fn">poll</span>(self):
+        <span class="st">"""
+        Call this in a loop. Checks for incoming packets.
+        Fires on_receive(rssi, snr, data) when one arrives.
+        """</span>
+        irq = self._get_irq()
+        <span class="kw">if</span> irq &amp; <span class="nu">0x02</span>:  <span class="cm"># RxDone</span>
+            self._cmd([_CMD_CLEAR_IRQ, <span class="nu">0xFF</span>, <span class="nu">0xFF</span>])
+            <span class="cm"># Read how many bytes arrived and where in the FIFO</span>
+            status = self._cmd([_CMD_GET_RX_BUFFER_STATUS, <span class="nu">0</span>, <span class="nu">0</span>])
+            rx_len    = status[<span class="nu">1</span>]
+            rx_offset = status[<span class="nu">2</span>]
+            <span class="cm"># Read the payload bytes</span>
+            payload = self._cmd([_CMD_READ_BUFFER, rx_offset, <span class="nu">0</span>]
+                                + [<span class="nu">0</span>] * rx_len)[<span class="nu">3</span>:]
+            <span class="cm"># Get RSSI and SNR</span>
+            pkt = self._cmd([_CMD_GET_PACKET_STATUS, <span class="nu">0</span>, <span class="nu">0</span>, <span class="nu">0</span>])
+            rssi = -pkt[<span class="nu">1</span>] // <span class="nu">2</span>
+            snr  =  pkt[<span class="nu">2</span>] // <span class="nu">4</span>
+            <span class="kw">if</span> self.on_receive:
+                self.on_receive(rssi, snr, bytes(payload))
+        <span class="kw">elif</span> irq &amp; <span class="nu">0x40</span>:  <span class="cm"># CRC error</span>
+            self._cmd([_CMD_CLEAR_IRQ, <span class="nu">0xFF</span>, <span class="nu">0xFF</span>])
+            <span class="blt">print</span>(<span class="st">"[WARN] CRC error — packet corrupted."</span>)
+
+    <span class="cm"># ── Sleep ─────────────────────────────────────────────</span>
+    <span class="kw">def</span> <span class="fn">sleep</span>(self):
+        self._cmd([_CMD_SET_SLEEP, <span class="nu">0x04</span>])
+
+    <span class="cm"># ── Low-level helpers ──────────────────────────────────</span>
+    <span class="kw">def</span> <span class="fn">_wait_busy</span>(self, timeout=<span class="nu">3.0</span>):
+        <span class="st">"""Block until the BUSY pin goes low."""</span>
+        deadline = time.time() + timeout
+        <span class="kw">while</span> GPIO.input(self.busy_pin):
+            <span class="kw">if</span> time.time() &gt; deadline:
+                <span class="kw">raise</span> TimeoutError(<span class="st">"SX126X BUSY pin stuck high!"</span>)
+            time.sleep(<span class="nu">0.001</span>)
+
+    <span class="kw">def</span> <span class="fn">_cmd</span>(self, data):
+        <span class="st">"""Send bytes over SPI, return the response."""</span>
+        self._wait_busy()
+        resp = self._spi.xfer2(data)
+        <span class="kw">return</span> resp
+
+    <span class="kw">def</span> <span class="fn">_get_irq</span>(self):
+        <span class="st">"""Read the 16-bit IRQ status register."""</span>
+        r = self._cmd([_CMD_GET_IRQ_STATUS, <span class="nu">0</span>, <span class="nu">0</span>])
+        <span class="kw">return</span> (r[<span class="nu">1</span>] &lt;&lt; <span class="nu">8</span>) | r[<span class="nu">2</span>]</pre>
+      </div>
+    </div>
+
+    <div class="alert info" style="margin-top:8px;">
+      <span class="alert-icon">📁</span>
+      <div>Put all three files (<code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px">sender.py</code>, <code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px">receiver.py</code>, <code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px">lora_module.py</code>) in the same folder, for example: <code style="background:rgba(255,255,255,0.1);padding:1px 5px;border-radius:3px">/home/pi/lora_project/</code></div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SECTION 7: TESTING ===================== -->
+<div class="section" id="test">
+  <div class="container">
+    <div class="section-label"><span class="section-num">07</span><span class="section-tag">Testing</span></div>
+    <h2>How to Test the Communication</h2>
+    <p class="section-intro">You need two separate terminal windows — one for each Raspberry Pi. You can SSH into them from your laptop, or connect a keyboard and monitor to each.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-body">
+          <strong>Open a terminal on Pi B (Receiver) first</strong>
+          <p>Always start the receiver before the sender. This ensures Pi B is listening when Pi A begins transmitting.</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-body">
+          <strong>Navigate to your project folder on Pi B</strong>
+          <div class="terminal">
+            <div class="terminal-bar"><span class="term-dot td-r"></span><span class="term-dot td-y"></span><span class="term-dot td-g"></span><span class="term-title">pi@raspberry-B: ~/lora_project</span></div>
+            <pre><span class="t-prompt">pi@raspberry-B:~$</span> cd ~/lora_project
+<span class="t-prompt">pi@raspberry-B:~/lora_project$</span> python3 receiver.py</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-body">
+          <strong>Open a terminal on Pi A (Sender) and start sending</strong>
+          <div class="terminal">
+            <div class="terminal-bar"><span class="term-dot td-r"></span><span class="term-dot td-y"></span><span class="term-dot td-g"></span><span class="term-title">pi@raspberry-A: ~/lora_project</span></div>
+            <pre><span class="t-prompt">pi@raspberry-A:~$</span> cd ~/lora_project
+<span class="t-prompt">pi@raspberry-A:~/lora_project$</span> python3 sender.py</pre>
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-body">
+          <strong>Watch the messages appear on Pi B's screen</strong>
+          <p>Every 5 seconds, a new message should appear in Pi B's terminal. RSSI shows signal strength (−50 dBm is excellent, −120 dBm is very weak).</p>
+        </div>
+      </div>
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-body">
+          <strong>Stop both programs with Ctrl+C</strong>
+          <p>Both scripts will clean up GPIO and put the LoRa module to sleep safely.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="alert warn" style="margin-top:24px;">
+      <span class="alert-icon">⚠️</span>
+      <div><strong>Frequency law!</strong> In Europe use 868 MHz. In the USA/Canada use 915 MHz. Using the wrong frequency is illegal in some countries. Check your country's radio regulations before transmitting outdoors.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== SECTION 8: EXPECTED OUTPUT ===================== -->
+<div class="section" id="output">
+  <div class="container">
+    <div class="section-label"><span class="section-num">08</span><span class="section-tag">Expected Output</span></div>
+    <h2>What You Should See</h2>
+    <p class="section-intro">Here is what each terminal screen will look like when everything is working correctly.</p>
+
+    <div class="output-grid">
+      <!-- Pi A Terminal -->
+      <div>
+        <p style="font-size:13px; color:var(--teal); font-weight:600; margin-bottom:8px; font-family:var(--font-mono)">📤 Pi A — Sender Terminal</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <span class="term-dot td-r"></span><span class="term-dot td-y"></span><span class="term-dot td-g"></span>
+            <span class="term-title">pi@raspberry-A: ~/lora_project</span>
+          </div>
+          <pre><span class="t-dim">===================================</span>
+<span class="t-ok">  LoRa Sender — Raspberry Pi A</span>
+<span class="t-dim">===================================</span>
+<span class="t-ok">[OK] LoRa ready at 868.0 MHz</span>
+<span class="t-info">[INFO] Sending messages every 5 seconds...</span>
+<span class="t-info">[INFO] Press Ctrl+C to stop.</span>
+
+<span class="t-ok">[TX] Sending: 'Hello from Pi A! Message #1'</span>
+<span class="t-ok">[TX] Sent! Waiting 5 seconds...</span>
+
+<span class="t-ok">[TX] Sending: 'Hello from Pi A! Message #2'</span>
+<span class="t-ok">[TX] Sent! Waiting 5 seconds...</span>
+
+<span class="t-ok">[TX] Sending: 'Hello from Pi A! Message #3'</span>
+<span class="t-ok">[TX] Sent! Waiting 5 seconds...</span>
+
+<span class="t-dim">^C</span>
+<span class="t-info">[STOP] Sender stopped by user.</span>
+<span class="t-ok">[OK] GPIO cleaned up.</span></pre>
+        </div>
+      </div>
+
+      <!-- Pi B Terminal -->
+      <div>
+        <p style="font-size:13px; color:var(--green); font-weight:600; margin-bottom:8px; font-family:var(--font-mono)">📥 Pi B — Receiver Terminal</p>
+        <div class="terminal">
+          <div class="terminal-bar">
+            <span class="term-dot td-r"></span><span class="term-dot td-y"></span><span class="term-dot td-g"></span>
+            <span class="term-title">pi@raspberry-B: ~/lora_project</span>
+          </div>
+          <pre><span class="t-dim">===================================</span>
+<span class="t-recv">  LoRa Receiver — Raspberry Pi B</span>
+<span class="t-dim">===================================</span>
+<span class="t-ok">[OK] Listening on 868.0 MHz...</span>
+<span class="t-info">[INFO] Waiting for messages from Pi A...</span>
+<span class="t-info">[INFO] Press Ctrl+C to stop.</span>
+
+<span class="t-recv">┌─────────────────────────────────</span>
+<span class="t-recv">│ 📨 MESSAGE RECEIVED at 14:23:01</span>
+<span class="t-recv">│ Content : Hello from Pi A! Message #1</span>
+<span class="t-recv">│ RSSI    : -67 dBm  (signal strength)</span>
+<span class="t-recv">│ SNR     : 9 dB   (signal quality)</span>
+<span class="t-recv">└─────────────────────────────────</span>
+
+<span class="t-recv">┌─────────────────────────────────</span>
+<span class="t-recv">│ 📨 MESSAGE RECEIVED at 14:23:06</span>
+<span class="t-recv">│ Content : Hello from Pi A! Message #2</span>
+<span class="t-recv">│ RSSI    : -68 dBm  (signal strength)</span>
+<span class="t-recv">│ SNR     : 8 dB   (signal quality)</span>
+<span class="t-recv">└─────────────────────────────────</span>
+
+<span class="t-dim">^C</span>
+<span class="t-info">[STOP] Receiver stopped by user.</span>
+<span class="t-ok">[OK] GPIO cleaned up.</span></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Understanding RSSI -->
+    <div class="card" style="margin-top:24px;">
+      <div class="card-header">
+        <div class="card-icon">📊</div>
+        <h3>Understanding RSSI and SNR</h3>
+      </div>
+      <table class="wire-table">
+        <thead><tr><th>RSSI Value</th><th>Signal Quality</th><th>What it Means</th></tr></thead>
+        <tbody>
+          <tr><td><span class="pin-badge green">−30 to −60 dBm</span></td><td>🟢 Excellent</td><td>Boards are close together or in clear line of sight</td></tr>
+          <tr><td><span class="pin-badge amber">−60 to −90 dBm</span></td><td>🟡 Good</td><td>Normal indoor range, a few walls in between</td></tr>
+          <tr><td><span class="pin-badge amber">−90 to −110 dBm</span></td><td>🟠 Weak</td><td>Long distance or many obstacles — may still work</td></tr>
+          <tr><td><span class="pin-badge red">Below −110 dBm</span></td><td>🔴 Very Weak</td><td>On the edge of range — move boards closer</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Troubleshooting -->
+    <h3 style="font-size:18px; font-weight:600; margin: 32px 0 12px;">Troubleshooting</h3>
+    <div class="card">
+      <p style="font-size:14px; color:var(--text2); margin-bottom:16px;">If messages are not arriving, check these things in order:</p>
+      <table class="wire-table">
+        <thead><tr><th>Problem</th><th>Likely Cause</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td style="color:var(--red)">No output on Pi B</td><td>SPI not enabled</td><td>Run <code>ls /dev/spidev*</code> — if empty, enable SPI in raspi-config</td></tr>
+          <tr><td style="color:var(--red)">BUSY pin stuck</td><td>Bad power or reset</td><td>Unplug power, remove HAT, reseat it, power back on</td></tr>
+          <tr><td style="color:var(--red)">CRC errors</td><td>Settings mismatch</td><td>Check frequency, BW, SF, CR are identical in both files</td></tr>
+          <tr><td style="color:var(--amber2)">Very low RSSI</td><td>Weak signal</td><td>Move boards closer, check antenna is screwed in tight</td></tr>
+          <tr><td style="color:var(--amber2)">ImportError</td><td>Library not installed</td><td>Run <code>pip3 install spidev RPi.GPIO</code> again</td></tr>
+          <tr><td style="color:var(--amber2)">GPIO already in use</td><td>Previous script running</td><td>Press Ctrl+C to stop old scripts, or reboot the Pi</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== FOOTER ===================== -->
+<footer>
+  <div class="container">
+    <p style="margin-bottom:8px; color:var(--text2);">🍓 LoRa Link — Raspberry Pi 5 + SX126X LoRa HAT Guide</p>
+    <p>Frequency band: <strong>868 MHz</strong> (EU) / <strong>915 MHz</strong> (US/CA) &nbsp;·&nbsp; Always attach antenna before powering on &nbsp;·&nbsp; Check local radio regulations</p>
+    <p style="margin-top:12px; color:var(--text3); font-size:12px;">GPIO pin numbers use BCM (Broadcom) numbering. Tested on Raspberry Pi OS Bookworm. SX1261 / SX1262 / SX1268 all supported.</p>
+  </div>
+</footer>
+
+<script>
+function switchTab(btn, tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function copyCode(btn) {
+  const block = btn.closest('.code-block');
+  const pre = block.querySelector('pre');
+  const text = pre.innerText || pre.textContent;
+  navigator.clipboard.writeText(text).then(() => {
+    btn.textContent = 'Copied!';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+</script>
+</body>
+</html>
